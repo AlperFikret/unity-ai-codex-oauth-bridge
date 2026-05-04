@@ -18,10 +18,16 @@
   ],
   "files": [
     "Editor",
+    "Editor.meta",
     "Documentation~",
+    "Documentation~.meta",
     "README.md",
+    "README.md.meta",
     "CHANGELOG.md",
-    "LICENSE"
+    "CHANGELOG.md.meta",
+    "LICENSE",
+    "LICENSE.meta",
+    "package.json.meta"
   ],
   "dependencies": {
     "com.unity.ai.assistant": "2.7.0-pre.1",
