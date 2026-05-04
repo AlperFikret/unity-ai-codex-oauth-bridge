@@ -246,6 +246,7 @@ namespace UnityAiCodexOAuthBridge.Editor
             report.AppendLine($"Codex CLI login: {(!string.IsNullOrEmpty(codex) && IsCodexLoggedIn(codex) ? "logged in" : "not verified")}");
             report.AppendLine($"Gateway prefs: {GetGatewayPreferencesStatus()}");
             report.AppendLine($"Relay service: {GetRelayServiceStatus()}");
+            report.AppendLine($"MCP conflict check: {GetGlobalUnityMcpConflictStatus()}");
             return report.ToString();
         }
 
@@ -658,10 +659,7 @@ namespace UnityAiCodexOAuthBridge.Editor
         {
             try
             {
-                var config = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".codex",
-                    "config.toml");
+                var config = GetCodexConfigPath();
                 if (!File.Exists(config))
                     return null;
 
@@ -686,6 +684,57 @@ namespace UnityAiCodexOAuthBridge.Editor
             }
 
             return null;
+        }
+
+        static string GetGlobalUnityMcpConflictStatus()
+        {
+            try
+            {
+                var config = GetCodexConfigPath();
+                if (!File.Exists(config))
+                    return "No global Codex config found.";
+
+                var foundUnityMcpSection = false;
+                var foundMcpForUnityCommand = false;
+
+                foreach (var rawLine in File.ReadLines(config))
+                {
+                    var line = rawLine.Trim();
+                    if (line.Length == 0 || line.StartsWith("#", StringComparison.Ordinal))
+                        continue;
+
+                    if (line.Equals("[mcp_servers.unityMCP]", StringComparison.OrdinalIgnoreCase) ||
+                        line.Equals("[mcp_servers.\"unityMCP\"]", StringComparison.OrdinalIgnoreCase) ||
+                        line.Equals("[mcp_servers.'unityMCP']", StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundUnityMcpSection = true;
+                        continue;
+                    }
+
+                    if (line.IndexOf("mcp-for-unity", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        line.IndexOf("mcpforunity", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        foundMcpForUnityCommand = true;
+                    }
+                }
+
+                if (foundUnityMcpSection || foundMcpForUnityCommand)
+                    return "Possible global Codex Unity MCP conflict found. If scene tools report instance_count: 0, ask Codex to use Unity AI Assistant's unity-mcp-gateway server instead of the global unityMCP server.";
+
+                return "No known global Unity MCP conflict found.";
+            }
+            catch (Exception ex)
+            {
+                return $"Could not inspect global Codex config: {ex.Message}";
+            }
+        }
+
+        static string GetCodexConfigPath()
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".codex",
+                "config.toml");
         }
 
         static string FindCodexExecutable()

@@ -44,6 +44,8 @@ Tools > Unity AI Codex OAuth > Setup Codex OAuth
 
 Then open Unity AI Assistant and select `Codex` as the provider.
 
+When Unity asks to approve a `codex-mcp-client` connection from the Unity AI Assistant package cache, approve it if you want Codex to inspect or modify the current Unity project. That permission is required for scene and asset tools.
+
 Useful commands:
 
 - `Tools > Unity AI Codex OAuth > Diagnostics`
@@ -63,5 +65,11 @@ This restores the backed-up relay executable. It does not delete your Codex CLI 
 ## Notes
 
 Unity AI Assistant package updates can replace the relay executable. If the `OPENAI_API_KEY` error returns after an update, run setup again.
+
+If Codex can answer normally but says `No Unity Editor instances found` or `instance_count: 0` when asked to inspect the scene, it may be using a global Codex Unity MCP server instead of Unity AI Assistant's built-in `unity-mcp-gateway`. Start a new Assistant chat and try:
+
+```text
+Do not use the global unityMCP server. Use the Unity AI Assistant provided MCP server named unity-mcp-gateway. List the current Unity scene hierarchy.
+```
 
 See [troubleshooting](Documentation~/troubleshooting.md) for common failure cases.

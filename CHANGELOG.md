@@ -6,3 +6,4 @@
 - Adds one-click setup for using Codex ChatGPT OAuth in Unity AI Assistant.
 - Safely patches the local Unity AI Assistant relay binary after creating a backup.
 - Adds diagnostics and restore commands.
+- Documents Unity MCP server conflicts and reports possible global Codex `unityMCP` conflicts in diagnostics.
