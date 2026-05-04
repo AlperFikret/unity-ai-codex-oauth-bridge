@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
+using PackageManagerPackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace UnityAiCodexOAuthBridge.Editor
 {
@@ -537,9 +537,9 @@ namespace UnityAiCodexOAuthBridge.Editor
             }
         }
 
-        static PackageInfo ResolveAssistantPackage(StringBuilder report)
+        static PackageManagerPackageInfo ResolveAssistantPackage(StringBuilder report)
         {
-            var packageInfo = PackageInfo.FindForPackageName(AssistantPackageName);
+            var packageInfo = PackageManagerPackageInfo.FindForPackageName(AssistantPackageName);
             if (packageInfo == null)
             {
                 report.AppendLine($"ERROR: {AssistantPackageName} is not installed.");
@@ -549,7 +549,7 @@ namespace UnityAiCodexOAuthBridge.Editor
             return packageInfo;
         }
 
-        static string ResolveRelayPath(PackageInfo packageInfo)
+        static string ResolveRelayPath(PackageManagerPackageInfo packageInfo)
         {
             var basePath = packageInfo.resolvedPath;
             if (!Path.IsPathRooted(basePath))
