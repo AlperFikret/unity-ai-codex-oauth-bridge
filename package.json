@@ -1,0 +1,30 @@
+{
+  "name": "com.fikret.unity-ai-codex-oauth-bridge",
+  "version": "0.1.0",
+  "displayName": "Unity AI Codex OAuth Bridge",
+  "description": "Use Codex ChatGPT OAuth with Unity AI Assistant without manually entering an OpenAI API key.",
+  "unity": "6000.0",
+  "author": {
+    "name": "Alper"
+  },
+  "license": "MIT",
+  "keywords": [
+    "unity",
+    "ai",
+    "assistant",
+    "codex",
+    "oauth",
+    "openai"
+  ],
+  "files": [
+    "Editor",
+    "Documentation~",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "com.unity.ai.assistant": "2.7.0-pre.1",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  }
+}
