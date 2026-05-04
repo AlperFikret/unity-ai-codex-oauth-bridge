@@ -31,7 +31,7 @@ It does not ship Unity binaries, Codex binaries, API keys, OAuth tokens, or cred
 3. Enter:
 
 ```text
-https://github.com/<your-user>/unity-ai-codex-oauth-bridge.git
+https://github.com/AlperFikret/unity-ai-codex-oauth-bridge.git
 ```
 
 ## Use
