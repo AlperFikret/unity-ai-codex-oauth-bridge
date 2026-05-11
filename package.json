@@ -1,6 +1,6 @@
 {
   "name": "com.fikret.unity-ai-codex-oauth-bridge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "displayName": "Unity AI Codex OAuth Bridge",
   "description": "Use Codex ChatGPT OAuth with Unity AI Assistant without manually entering an OpenAI API key.",
   "unity": "6000.0",

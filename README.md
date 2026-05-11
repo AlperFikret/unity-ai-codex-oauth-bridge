@@ -6,9 +6,9 @@ This package patches the local Unity AI Assistant relay metadata so Unity's Code
 
 ## Status
 
-- Version: `0.1.0`
+- Version: `0.1.1`
 - Platform: Windows only
-- Tested target: Unity AI Assistant `2.7.0-pre.1` on Unity 6.4
+- Tested targets: Unity AI Assistant `2.7.0-pre.1` and `2.7.0-pre.3` on Unity 6.4
 - License: MIT
 
 This is an unofficial bridge. It is not affiliated with Unity or OpenAI.
@@ -65,6 +65,8 @@ This restores the backed-up relay executable. It does not delete your Codex CLI 
 ## Notes
 
 Unity AI Assistant package updates can replace the relay executable. If the `OPENAI_API_KEY` error returns after an update, run setup again.
+
+The bridge only patches relay binaries whose Codex provider metadata matches a known safe signature. Unsupported Unity AI Assistant builds are refused until a matching signature is added.
 
 If Codex can answer normally but says `No Unity Editor instances found` or `instance_count: 0` when asked to inspect the scene, it may be using a global Codex Unity MCP server instead of Unity AI Assistant's built-in `unity-mcp-gateway`. Start a new Assistant chat and try:
 

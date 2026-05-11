@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Adds relay patch support for Unity AI Assistant `2.7.0-pre.3`.
+- Keeps binary patching signature-gated for unsupported relay builds.
+
 ## 0.1.0
 
 - Initial Windows-only release.

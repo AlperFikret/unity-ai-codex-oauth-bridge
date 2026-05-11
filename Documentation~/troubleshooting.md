@@ -44,6 +44,8 @@ If Unity shows a `New MCP Connection` dialog for `codex-mcp-client` from the Uni
 
 The bridge refuses to patch unknown relay binaries. This is intentional. Unity may have changed the bundled relay code, and the patch signature must be updated before it is safe to modify.
 
+Version `0.1.1` includes signatures for Unity AI Assistant `2.7.0-pre.1` and `2.7.0-pre.3`.
+
 ## Restore Original Relay
 
 Use:

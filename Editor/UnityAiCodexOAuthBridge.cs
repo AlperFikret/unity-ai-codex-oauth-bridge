@@ -18,7 +18,7 @@ namespace UnityAiCodexOAuthBridge.Editor
         const string LogPrefix = "[Unity AI Codex OAuth Bridge]";
         const string MenuRoot = "Tools/Unity AI Codex OAuth/";
         const string AssistantPackageName = "com.unity.ai.assistant";
-        const string SupportedAssistantVersion = "2.7.0-pre.1";
+        const string SupportedAssistantVersionsText = "2.7.0-pre.1, 2.7.0-pre.3";
         const string RelayExecutableName = "relay_win.exe";
         const string BackupExtension = ".codex-oauth-backup";
         const string ProviderId = "codex";
@@ -39,13 +39,26 @@ namespace UnityAiCodexOAuthBridge.Editor
         const string RelayPatchedUtcPrefsKey = BridgePrefsPrefix + "RelayPatchedUtc";
 
         // Unity AI Assistant 2.7.0-pre.1 bundled relay Codex provider literal.
-        const string OriginalCodexProviderLiteral =
+        const string OriginalCodexProviderLiteralPre1 =
             "nk={id:\"codex\",displayName:\"Codex\",envVarNames:[\"OPENAI_API_KEY\"],keychainEnvVar:[\"OPENAI_API_KEY\"],importEnv:[\"OPENAI_*\"],helpText:\"Requires OPENAI_API_KEY\",startupTroubleshootingHint:\"Ensure OPENAI_API_KEY environment variable is set in the <link=open-gateway-preferences><color=#7BAEFA>Gateway preferences</color></link>.\",isCustom:!0,agentsMdFilename:\"AGENTS.md\",postInstall:{message:`To use Codex, you need to add an API key. Follow these steps:\n- Create one by visiting <a href=\"https://platform.openai.com/api-keys\">OpenAI's settings</a>\n- Paste your API key below and hit enter to start using the agent`,envVarName:\"OPENAI_API_KEY\"},start:Od,onBeforeCredentialStore:(v)=>{if(v===\"OPENAI_API_KEY\")$z4()}}});";
 
-        const string PatchedCodexProviderLiteral =
+        const string PatchedCodexProviderLiteralPre1 =
             "nk={id:\"codex\",displayName:\"Codex\",envVarNames:[],keychainEnvVar:[],importEnv:[],helpText:\"Uses Codex ChatGPT OAuth\",startupTroubleshootingHint:\"Run Setup Codex OAuth from the Unity Tools menu.\",isCustom:!0,agentsMdFilename:\"AGENTS.md\",postInstall:null,start:Od,onBeforeCredentialStore:void 0}});";
 
+        // Unity AI Assistant 2.7.0-pre.3 bundled relay Codex provider literal.
+        const string OriginalCodexProviderLiteralPre3 =
+            "yk={id:\"codex\",displayName:\"Codex\",envVarNames:[\"OPENAI_API_KEY\"],keychainEnvVar:[\"OPENAI_API_KEY\"],importEnv:[\"OPENAI_*\"],helpText:\"Requires OPENAI_API_KEY\",startupTroubleshootingHint:\"Ensure OPENAI_API_KEY environment variable is set in the <link=open-gateway-preferences><color=#7BAEFA>Gateway preferences</color></link>.\",isCustom:!0,agentsMdFilename:\"AGENTS.md\",postInstall:{message:`To use Codex, you need to add an API key. Follow these steps:\n- Create one by visiting <a href=\"https://platform.openai.com/api-keys\">OpenAI's settings</a>\n- Paste your API key below and hit enter to start using the agent`,envVarName:\"OPENAI_API_KEY\"},start:Od,onBeforeCredentialStore:(v)=>{if(v===\"OPENAI_API_KEY\")Uz4()}}});";
+
+        const string PatchedCodexProviderLiteralPre3 =
+            "yk={id:\"codex\",displayName:\"Codex\",envVarNames:[],keychainEnvVar:[],importEnv:[],helpText:\"Uses Codex ChatGPT OAuth\",startupTroubleshootingHint:\"Run Setup Codex OAuth from the Unity Tools menu.\",isCustom:!0,agentsMdFilename:\"AGENTS.md\",postInstall:null,start:Od,onBeforeCredentialStore:void 0}});";
+
         static readonly Encoding Utf8 = new UTF8Encoding(false);
+        static readonly RelayPatchSignature[] RelayPatchSignatures =
+        {
+            new RelayPatchSignature("2.7.0-pre.1", OriginalCodexProviderLiteralPre1, PatchedCodexProviderLiteralPre1),
+            new RelayPatchSignature("2.7.0-pre.3", OriginalCodexProviderLiteralPre3, PatchedCodexProviderLiteralPre3)
+        };
+
         static double s_LoginPollStartedAt;
         static double s_NextLoginPollAt;
         static int s_ActivationReapplyCount;
@@ -57,6 +70,20 @@ namespace UnityAiCodexOAuthBridge.Editor
             SupportedUnpatched,
             Patched,
             Unsupported
+        }
+
+        sealed class RelayPatchSignature
+        {
+            public readonly string AssistantVersion;
+            public readonly string OriginalLiteral;
+            public readonly string PatchedLiteral;
+
+            public RelayPatchSignature(string assistantVersion, string originalLiteral, string patchedLiteral)
+            {
+                AssistantVersion = assistantVersion;
+                OriginalLiteral = originalLiteral;
+                PatchedLiteral = patchedLiteral;
+            }
         }
 
         [MenuItem(MenuRoot + "Setup Codex OAuth")]
@@ -109,8 +136,8 @@ namespace UnityAiCodexOAuthBridge.Editor
             if (packageInfo == null)
                 return report.ToString();
 
-            if (!string.Equals(packageInfo.version, SupportedAssistantVersion, StringComparison.Ordinal))
-                report.AppendLine($"WARNING: Tested target is {SupportedAssistantVersion}; installed version is {packageInfo.version}. The binary signature check will still prevent unsupported patches.");
+            if (!IsSupportedAssistantVersion(packageInfo.version))
+                report.AppendLine($"WARNING: Tested targets are {SupportedAssistantVersionsText}; installed version is {packageInfo.version}. The binary signature check will still prevent unsupported patches.");
 
             var relayPath = ResolveRelayPath(packageInfo);
             report.AppendLine($"Relay: {relayPath}");
@@ -278,15 +305,24 @@ namespace UnityAiCodexOAuthBridge.Editor
                     report.AppendLine($"Backup already exists: {backupPath}");
                 }
 
-                var originalBytes = Utf8.GetBytes(OriginalCodexProviderLiteral);
-                var patchedBytes = Utf8.GetBytes(PatchedCodexProviderLiteral);
+                var relayBytes = File.ReadAllBytes(relayPath);
+                var signature = FindRelayPatchSignature(relayBytes);
+                if (signature == null)
+                {
+                    report.AppendLine("ERROR: Supported Codex provider literal was not found.");
+                    return false;
+                }
+
+                report.AppendLine($"Matched Unity AI Assistant relay signature: {signature.AssistantVersion}.");
+
+                var originalBytes = Utf8.GetBytes(signature.OriginalLiteral);
+                var patchedBytes = Utf8.GetBytes(signature.PatchedLiteral);
                 if (patchedBytes.Length > originalBytes.Length)
                 {
                     report.AppendLine("ERROR: Internal patch literal is longer than original literal.");
                     return false;
                 }
 
-                var relayBytes = File.ReadAllBytes(relayPath);
                 var index = IndexOf(relayBytes, originalBytes);
                 if (index < 0)
                 {
@@ -321,11 +357,11 @@ namespace UnityAiCodexOAuthBridge.Editor
             try
             {
                 var bytes = File.ReadAllBytes(relayPath);
-                if (IndexOf(bytes, Utf8.GetBytes(PatchedCodexProviderLiteral)) >= 0 ||
+                if (ContainsPatchedCodexProvider(bytes) ||
                     IndexOf(bytes, Utf8.GetBytes("envVarNames:[],keychainEnvVar:[],importEnv:[],helpText:\"Uses Codex ChatGPT OAuth\"")) >= 0)
                     return RelayPatchState.Patched;
 
-                if (IndexOf(bytes, Utf8.GetBytes(OriginalCodexProviderLiteral)) >= 0)
+                if (FindRelayPatchSignature(bytes) != null)
                     return RelayPatchState.SupportedUnpatched;
 
                 return RelayPatchState.Unsupported;
@@ -334,6 +370,39 @@ namespace UnityAiCodexOAuthBridge.Editor
             {
                 return RelayPatchState.Unsupported;
             }
+        }
+
+        static bool ContainsPatchedCodexProvider(byte[] relayBytes)
+        {
+            foreach (var signature in RelayPatchSignatures)
+            {
+                if (IndexOf(relayBytes, Utf8.GetBytes(signature.PatchedLiteral)) >= 0)
+                    return true;
+            }
+
+            return false;
+        }
+
+        static RelayPatchSignature FindRelayPatchSignature(byte[] relayBytes)
+        {
+            foreach (var signature in RelayPatchSignatures)
+            {
+                if (IndexOf(relayBytes, Utf8.GetBytes(signature.OriginalLiteral)) >= 0)
+                    return signature;
+            }
+
+            return null;
+        }
+
+        static bool IsSupportedAssistantVersion(string version)
+        {
+            foreach (var signature in RelayPatchSignatures)
+            {
+                if (string.Equals(signature.AssistantVersion, version, StringComparison.Ordinal))
+                    return true;
+            }
+
+            return false;
         }
 
         static void PatchGatewayPreferences(StringBuilder report)
